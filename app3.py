@@ -1,3 +1,7 @@
+print("Iniciando o carregamento dos módulos...")
+print("Mensagens abaixo informam que a CPU está sendo otimizada para o processamento, você pode ignorar.")
+print("Pode demorar alguns segundos...")
+
 import tkinter as tk
 from tkinter import messagebox
 import cv2
@@ -9,7 +13,7 @@ from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 from tensorflow.keras.models import load_model
 
 # Carrega o modelo
-print("\nCarregando o modelo...")
+print("\nCarregando o modelo...\n\n")
 # Caminho para o modelo
 if getattr(sys, 'frozen', False):
     # Se rodando como executável
@@ -20,7 +24,7 @@ else:
 
 model_path = os.path.join(base_path, "modelo_06.keras")
 model = load_model(model_path)
-print("Modelo carregado com sucesso!")
+print("\n\nModelo carregado com sucesso!")
 
 
 #
@@ -37,18 +41,20 @@ print("Modelo carregado com sucesso!")
 classes = ['A', 'E', 'I', 'O', 'U']
 
 def testar_frame(frame):
-    # Converte BGR para RGB e redimensiona para 224x224
-    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    resized = cv2.resize(rgb_frame, (224, 224))
-    img_array = np.expand_dims(resized.astype("float32"), axis=0)
-    img_array = preprocess_input(img_array)
-    resultado = model.predict(img_array)
-    return resultado[0]
+    try:
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        resized = cv2.resize(rgb_frame, (224, 224))
+        img_array = np.expand_dims(resized.astype("float32"), axis=0)
+        img_array = preprocess_input(img_array)
+        resultado = model.predict(img_array)
+        return resultado[0]
+    except Exception as e:
+        messagebox.showerror("Erro", f"Ocorreu um erro ao testar a imagem tente fechar e abrir novamente:\n{e}")
 
 class App:
     def __init__(self, window):
         self.window = window
-        self.window.title("Aplicação de Testes com Sinais")
+        self.window.title("Identificador de Vogais em LIBRAS")
         self.window.configure(bg="#03060d")
         self.window.geometry("800x600")
         self.window.protocol('WM_DELETE_WINDOW', self.on_close)
@@ -161,9 +167,7 @@ class App:
         # Label informativo
         info_text = (
             '''
-            Programador: Daniel Borges Gonçalves
-
-            Esta aplicação utiliza uma rede neural convolucional (CNN) para 
+            Esta aplicação utiliza uma Rede Neural Convolucional (CNN) para 
             identificar as vogais em LIBRAS. Ela foi treinada com 5000
             imagens de mãos realizando os sinais das vogais A, E, I, O e U. Em 
             situações de gestos incorretos a precisão pode ser afetada, então 
@@ -172,15 +176,16 @@ class App:
             Obs: A rede, esporadicamente, pode errar a classificações 
             (principalmente entre I e U).
             
-
             Língua Brasileira de Sinais (Libras):
             A Libras é a língua de sinais do Brasil, essencial para a inclusão social 
             da comunidade surda. Aprender Libras promove acessibilidade, respeito 
             à cultura surda e igualdade de direitos, fortalecendo a comunicação e a 
             cidadania.
 
-            Link do projeto no GitHub: https://github.com/Danielbgoncalves'''
+            Programador: Daniel Borges Gonçalves
+            No GitHub: https://github.com/Danielbgoncalves'''
         )
+        
         self.info_label = tk.Label(
             self.info_frame,
             text=info_text,
@@ -207,13 +212,17 @@ class App:
         
         # Inicia exibindo a tela da câmera
         self.camera_frame.pack(fill="both", expand=True)
-        
-        # Inicia a captura de vídeo
+
         self.cap = cv2.VideoCapture(0)
-        self.current_frame = None
-        self.in_camera = True
-        self.update_video()
-    
+        if not self.cap.isOpened():
+            #messagebox.showerror("Erro", "Não foi possível acessar a câmera!\nTalvez ela esteja bloqueada ou não exista.")
+            self.video_label.config(text="\nErro: Não foi possível acessar a câmera!\nTalvez ela esteja bloqueada ou não exista.\n", 
+                                    bg="white", font=("Helvetica", 14))
+            self.in_camera = False
+        else:
+            self.in_camera = True
+            self.update_video()
+
     def update_video(self):
         if self.in_camera:
             ret, frame = self.cap.read()
@@ -225,6 +234,7 @@ class App:
                 self.video_label.imgtk = imgtk
                 self.video_label.configure(image=imgtk)
             self.window.after(10, self.update_video)
+      
     
     def testar_imagem(self):
         if self.current_frame is not None:
