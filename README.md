@@ -19,7 +19,7 @@ Captura de frames em tempo real.
 - Exibe as probabilidades de predição para cada classe.
 
 
-# Treinamento do Modelo:
+## Treinamento do Modelo:
 
  **modelo3.py**: Script responsável pelo treinamento do modelo. Inclui:
 - Preparação dos datasets de treinamento e validação com ImageDataGenerator.
